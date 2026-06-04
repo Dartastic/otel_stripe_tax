@@ -2,7 +2,6 @@
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
-import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_stripe_tax_suppression.dart';
 
@@ -54,57 +53,72 @@ Future<T> tracedStripeTax<T>({
   final t = tracer ?? OTel.tracerProvider().getTracer('otel_stripe_tax');
   final span = t.startSpan('stripetax $operation', kind: SpanKind.client);
   try {
-    span.setStringAttribute('rpc.system', 'stripe_tax');
+    span.addAttributes(
+        OTel.attributes([OTel.attributeString('rpc.system', 'stripe_tax')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.calculationId != null) {
-        span.setStringAttribute(
-          'stripe_tax.calculation.id',
-          res.calculationId!,
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            'stripe_tax.calculation.id',
+            res.calculationId!,
+          )
+        ]));
       }
       if (res.transactionId != null) {
-        span.setStringAttribute(
-          'stripe_tax.transaction.id',
-          res.transactionId!,
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            'stripe_tax.transaction.id',
+            res.transactionId!,
+          )
+        ]));
       }
       if (res.country != null) {
-        span.setStringAttribute('stripe_tax.country', res.country!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('stripe_tax.country', res.country!)]));
       }
       if (res.state != null) {
-        span.setStringAttribute('stripe_tax.state', res.state!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('stripe_tax.state', res.state!)]));
       }
       if (res.postalCode != null) {
-        span.setStringAttribute('stripe_tax.postal_code', res.postalCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('stripe_tax.postal_code', res.postalCode!)]));
       }
       if (res.taxAmount != null) {
-        span.setDoubleAttribute('stripe_tax.amount', res.taxAmount!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeDouble('stripe_tax.amount', res.taxAmount!)]));
       }
       if (res.totalAmount != null) {
-        span.setDoubleAttribute('stripe_tax.total', res.totalAmount!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeDouble('stripe_tax.total', res.totalAmount!)]));
       }
       if (res.currency != null) {
-        span.setStringAttribute('stripe_tax.currency', res.currency!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('stripe_tax.currency', res.currency!)]));
       }
       if (res.behavior != null) {
-        span.setStringAttribute('stripe_tax.behavior', res.behavior!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('stripe_tax.behavior', res.behavior!)]));
       }
       if (res.statusCode != null) {
-        span.setIntAttribute('http.response.status_code', res.statusCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
       }
       if (res.errorCode != null) {
-        span.setStringAttribute('stripetax.error.code', res.errorCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('stripetax.error.code', res.errorCode!)]));
       }
-      final fail =
-          res.errorCode != null ||
+      final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.setStringAttribute(
-          ErrorResource.errorType.key,
-          res.errorCode ?? 'stripe_tax.error',
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            ErrorResource.errorType.key,
+            res.errorCode ?? 'stripe_tax.error',
+          )
+        ]));
         span.setStatus(SpanStatusCode.Error, res.errorMessage);
       }
     }
