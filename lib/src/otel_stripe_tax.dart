@@ -1,11 +1,12 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_stripe_tax_suppression.dart';
 
 class StripeTaxResult {
+  /// Creates a result.
   const StripeTaxResult({
     this.calculationId,
     this.transactionId,
@@ -35,8 +36,13 @@ class StripeTaxResult {
   final String? errorMessage;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class StripeTaxCallResult<T> {
+  /// Creates a call result.
   const StripeTaxCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final StripeTaxResult? result;
 }
@@ -44,78 +50,80 @@ class StripeTaxCallResult<T> {
 Future<T> tracedStripeTax<T>({
   required String operation,
   required Future<StripeTaxCallResult<T>> Function() invoke,
-  Tracer? tracer,
+  APITracer? tracer,
 }) async {
   if (stripeTaxInstrumentationSuppressed()) {
     final r = await invoke();
     return r.value;
   }
-  final t = tracer ?? OTel.tracerProvider().getTracer('otel_stripe_tax');
+  final t = tracer ?? OTelAPI.tracerProvider().getTracer('otel_stripe_tax');
   final span = t.startSpan('stripetax $operation', kind: SpanKind.client);
   try {
-    span.addAttributes(
-        OTel.attributes([OTel.attributeString('rpc.system', 'stripe_tax')]));
+    span.addAttributes(OTelAPI.attributes(
+        [OTelAPI.attributeString('rpc.system', 'stripe_tax')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.calculationId != null) {
-        span.addAttributes(OTel.attributes([
-          OTel.attributeString(
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString(
             'stripe_tax.calculation.id',
             res.calculationId!,
           )
         ]));
       }
       if (res.transactionId != null) {
-        span.addAttributes(OTel.attributes([
-          OTel.attributeString(
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString(
             'stripe_tax.transaction.id',
             res.transactionId!,
           )
         ]));
       }
       if (res.country != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('stripe_tax.country', res.country!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('stripe_tax.country', res.country!)]));
       }
       if (res.state != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('stripe_tax.state', res.state!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('stripe_tax.state', res.state!)]));
       }
       if (res.postalCode != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('stripe_tax.postal_code', res.postalCode!)]));
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString('stripe_tax.postal_code', res.postalCode!)
+        ]));
       }
       if (res.taxAmount != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeDouble('stripe_tax.amount', res.taxAmount!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeDouble('stripe_tax.amount', res.taxAmount!)]));
       }
       if (res.totalAmount != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeDouble('stripe_tax.total', res.totalAmount!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeDouble('stripe_tax.total', res.totalAmount!)]));
       }
       if (res.currency != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('stripe_tax.currency', res.currency!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('stripe_tax.currency', res.currency!)]));
       }
       if (res.behavior != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('stripe_tax.behavior', res.behavior!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('stripe_tax.behavior', res.behavior!)]));
       }
       if (res.statusCode != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeInt('http.response.status_code', res.statusCode!)
+        ]));
       }
       if (res.errorCode != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('stripetax.error.code', res.errorCode!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('stripetax.error.code', res.errorCode!)]));
       }
       final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.addAttributes(OTel.attributes([
-          OTel.attributeString(
-            ErrorResource.errorType.key,
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString(
+            ErrorAttributes.errorType.key,
             res.errorCode ?? 'stripe_tax.error',
           )
         ]));
